@@ -50,16 +50,16 @@ jobs:
             cd ~/app/backend
             npm install
 
-            echo " Restarting backend via PM2"
-            pm2 restart app || pm2 start app.js --name app
+            echo "🔁 Restarting backend via PM2"
+            pm2 restart index || pm2 start index.js --name index
 
-            echo " Cleaning old frontend files"
+            echo "🧹 Cleaning old frontend files"
             sudo rm -rf /var/www/html/*
 
-            echo "⬆ Updating frontend static files"
+            echo "⬆️ Updating frontend static files"
             sudo cp -r ~/app/frontend/* /var/www/html/
 
-            echo " Deployment complete"
+            echo "✅ Deployment complete"
 
       - name: Save deployment log
         run: |
