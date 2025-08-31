@@ -1,0 +1,68 @@
+name: Deploy Node.js & React to Azure VM
+
+on:
+  push:
+    branches:
+      - main # change if your default branch is different
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Install and build frontend
+        working-directory: frontend
+        run: |
+          npm install
+          npm run build
+
+      - name: Prepare deployment package
+        run: |
+          mkdir -p deploy
+          cp -r backend deploy/backend
+          cp -r frontend/build deploy/frontend
+
+      - name: Copy files to Azure VM via SCP
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.AZURE_HOST }}
+          username: ${{ secrets.AZURE_USER }}
+          key: ${{ secrets.AZURE_SSH_KEY }}
+          source: "deploy/*"
+          target: "/home/${{ secrets.AZURE_USER }}/app"
+
+      - name: Deploy on Azure VM
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.AZURE_HOST }}
+          username: ${{ secrets.AZURE_USER }}
+          key: ${{ secrets.AZURE_SSH_KEY }}
+          script: |
+            echo "➡ Navigating to backend"
+            cd ~/app/backend
+            npm install
+
+            echo " Restarting backend via PM2"
+            pm2 restart app || pm2 start app.js --name app
+
+            echo " Cleaning old frontend files"
+            sudo rm -rf /var/www/html/*
+
+            echo "⬆ Updating frontend static files"
+            sudo cp -r ~/app/frontend/* /var/www/html/
+
+            echo " Deployment complete"
+
+      - name: Save deployment log
+        run: |
+          mkdir -p logs
+          echo "Deployment run on: $(date)" > logs/deploy.log
+          tar -czvf deploy_log.tar.gz logs

@@ -1,0 +1,17 @@
+#!/bin/bash
+set -e
+
+# Update system
+sudo apt update && sudo apt upgrade -y
+
+# Install Node.js and npm
+sudo apt install -y nodejs npm
+
+# Install and start Nginx
+sudo apt install -y nginx
+sudo systemctl enable nginx
+sudo systemctl start nginx
+
+# Firewall rules (if UFW is used)
+sudo ufw allow 'Nginx Full'
+sudo ufw allow OpenSSH
