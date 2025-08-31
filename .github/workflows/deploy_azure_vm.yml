@@ -28,7 +28,7 @@ jobs:
         run: |
           mkdir -p deploy
           cp -r server deploy/server
-          cp -r client/build deploy/client
+          cp -r client/dist deploy/client
 
       - name: Copy files to Azure VM via SCP
         uses: appleboy/scp-action@v0.1.7
