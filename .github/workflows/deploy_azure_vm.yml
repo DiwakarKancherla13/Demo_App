@@ -1,4 +1,4 @@
-name: Deploy Node.js & React to Azure VM
+name: Deploy Node.js & Vite React to Azure VM
 
 on:
   push:
@@ -30,14 +30,23 @@ jobs:
           cp -r server deploy/server
           cp -r client/dist deploy/client
 
-      - name: Copy files to Azure VM via SCP
+      - name: Copy server to Azure VM
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.AZURE_HOST }}
           username: ${{ secrets.AZURE_USER }}
           key: ${{ secrets.AZURE_SSH_KEY }}
-          source: "deploy/*"
-          target: "/home/${{ secrets.AZURE_USER }}/app"
+          source: "deploy/server"
+          target: "/home/${{ secrets.AZURE_USER }}/demo-app/Demo/server"
+
+      - name: Copy client to Azure VM
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.AZURE_HOST }}
+          username: ${{ secrets.AZURE_USER }}
+          key: ${{ secrets.AZURE_SSH_KEY }}
+          source: "deploy/client"
+          target: "/home/${{ secrets.AZURE_USER }}/demo-app/Demo/client"
 
       - name: Deploy on Azure VM
         uses: appleboy/ssh-action@v1.0.3
@@ -46,14 +55,9 @@ jobs:
           username: ${{ secrets.AZURE_USER }}
           key: ${{ secrets.AZURE_SSH_KEY }}
           script: |
-            cd ~/app/server
+            mkdir -p ~/demo-app/Demo/server ~/demo-app/Demo/client
+            cd ~/demo-app/Demo/server
             npm install
             pm2 restart index || pm2 start index.js --name index
             sudo rm -rf /var/www/html/*
-            sudo cp -r ~/app/client/* /var/www/html/
-
-      - name: Save deployment log
-        run: |
-          mkdir -p logs
-          echo "Deployment run on: $(date)" > logs/deploy.log
-          tar -czvf deploy_log.tar.gz logs
+            sudo cp -r ~/demo-app/Demo/client/* /var/www/html/
