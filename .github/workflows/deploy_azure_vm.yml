@@ -61,3 +61,21 @@ jobs:
             pm2 restart index || pm2 start index.js --name index
             sudo rm -rf /var/www/html/*
             sudo cp -r ~/demo-app/Demo/client/* /var/www/html/
+
+      - name: Save deployment logs
+        run: |
+          mkdir -p logs
+          echo "===== DEPLOYMENT LOG =====" > logs/deploy.log
+          echo "Workflow ran on: $(date)" >> logs/deploy.log
+          echo "--- Job context ---" >> logs/deploy.log
+          echo "Branch: $GITHUB_REF" >> logs/deploy.log
+          echo "Commit: $GITHUB_SHA" >> logs/deploy.log
+          echo "--- GitHub Runner ---" >> logs/deploy.log
+          uname -a >> logs/deploy.log
+          echo "--- Done ---" >> logs/deploy.log
+
+      - name: Upload deploy.log as artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: deploy-log
+          path: logs/deploy.log
