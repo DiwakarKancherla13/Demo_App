@@ -3,7 +3,7 @@ name: Deploy Node.js & React to Azure VM
 on:
   push:
     branches:
-      - main # change if your default branch is different
+      - main
 
 jobs:
   deploy:
@@ -19,7 +19,7 @@ jobs:
           node-version: 18
 
       - name: Install and build frontend
-        working-directory: frontend
+        working-directory: client
         run: |
           npm install
           npm run build
@@ -27,8 +27,8 @@ jobs:
       - name: Prepare deployment package
         run: |
           mkdir -p deploy
-          cp -r backend deploy/backend
-          cp -r frontend/build deploy/frontend
+          cp -r server deploy/server
+          cp -r client/build deploy/client
 
       - name: Copy files to Azure VM via SCP
         uses: appleboy/scp-action@v0.1.7
@@ -46,20 +46,11 @@ jobs:
           username: ${{ secrets.AZURE_USER }}
           key: ${{ secrets.AZURE_SSH_KEY }}
           script: |
-            echo "➡ Navigating to backend"
-            cd ~/app/backend
+            cd ~/app/server
             npm install
-
-            echo "🔁 Restarting backend via PM2"
             pm2 restart index || pm2 start index.js --name index
-
-            echo "🧹 Cleaning old frontend files"
             sudo rm -rf /var/www/html/*
-
-            echo "⬆️ Updating frontend static files"
-            sudo cp -r ~/app/frontend/* /var/www/html/
-
-            echo "✅ Deployment complete"
+            sudo cp -r ~/app/client/* /var/www/html/
 
       - name: Save deployment log
         run: |
